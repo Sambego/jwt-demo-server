@@ -28,6 +28,14 @@ const checkJwt = jwtMiddleware({
 
 app.use(bodyParser.json());
 app.use(express.static("public"));
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  next();
+});
 
 // A simple authentication endpoint which will check
 // for the user sambego/password, and send a JWT back if
@@ -38,6 +46,7 @@ app.post("/api/authenticate", (req, res) => {
       req.body.password
     }"`
   );
+  console.log(req.body);
 
   if (req.body.username === USERNAME && req.body.password === PASSWORD) {
     const createdDate = new Date();
@@ -61,15 +70,16 @@ app.post("/api/authenticate", (req, res) => {
 });
 
 // A public API endpoint returning dog pictures
-app.get("/api/dogs", (req, res) => {
-  console.log(id);
+app.get("/api/dog", (req, res) => {
   res.json({
-    url: `${req.protocol}://${req.get("host")}/images/dogs/${dogs[id]}`
+    url: `${req.protocol}://${req.get("host")}/images/dogs/${
+      dogs[Math.floor(Math.random() * dogs.length)]
+    }`
   });
 });
 
-// A private API endpoint
-app.get("/api/cats", checkJwt, (req, res) => {
+// A private API endpoint returning cat pictures
+app.get("/api/cat", checkJwt, (req, res) => {
   res.json({
     url: `${req.protocol}://${req.get("host")}/images/cats/${
       cats[Math.floor(Math.random() * cats.length)]
