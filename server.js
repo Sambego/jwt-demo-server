@@ -46,7 +46,6 @@ app.post("/api/authenticate", (req, res) => {
       req.body.password
     }"`
   );
-  console.log(req.body);
 
   if (req.body.username === USERNAME && req.body.password === PASSWORD) {
     const createdDate = new Date();
@@ -55,18 +54,21 @@ app.post("/api/authenticate", (req, res) => {
 
     const token = jwt.sign(
       {
-        id: 1,
-        user: req.body.username,
+        sub: 1,
+        iss: `${req.protocol}://${req.get("host")}`,
         iat: createdDate.getTime(),
-        exp: expiresDate.getTime()
+        exp: expiresDate.getTime(),
+        preferred_username: req.body.username
       },
       SUPER_SECRET
     );
 
-    return res.status(200).send(token);
+    return res.status(200).send({ jwt: token });
   }
 
-  return res.status(401).send("The username and password do not match");
+  return res
+    .status(401)
+    .send({ error: "The username and password do not match" });
 });
 
 // A public API endpoint returning dog pictures
@@ -85,6 +87,12 @@ app.get("/api/cat", checkJwt, (req, res) => {
       cats[Math.floor(Math.random() * cats.length)]
     }`
   });
+});
+
+app.use(function(err, req, res, next) {
+  if (err.name === "UnauthorizedError") {
+    res.status(401).send({ error: err.message });
+  }
 });
 
 // Tell the server what port to listen on
